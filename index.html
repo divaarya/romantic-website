@@ -48,45 +48,61 @@
         z-index: 1;
       }
 
-      .music {
+      /* MUSIC PLAYER */
+      .music-player {
         position: fixed;
-        bottom: max(16px, env(safe-area-inset-bottom));
         left: 50%;
+        bottom: max(24px, env(safe-area-inset-bottom));
         transform: translateX(-50%);
         display: flex;
         align-items: center;
-        justify-content: center;
-        gap: 10px;
-        color: #f9a9ca;
-        font:
-          13px Arial,
-          sans-serif;
-        background: rgba(16, 7, 13, 0.92);
-        border: 1px solid #71304f;
-        border-radius: 30px;
-        padding: 10px 17px;
+        gap: 11px;
+        padding: 8px 17px 8px 9px;
+        background: rgba(20, 9, 16, 0.9);
+        border: 1px solid rgba(255, 112, 173, 0.35);
+        border-radius: 40px;
+        z-index: 5;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 0 20px rgba(255, 36, 124, 0.12);
         white-space: nowrap;
-        z-index: 3;
-        box-shadow: 0 0 18px rgba(255, 36, 124, 0.12);
-        backdrop-filter: blur(8px);
       }
 
-      .music-note {
-        font-size: 17px;
-        animation: notePulse 1.5s ease-in-out infinite;
+      .music-player button {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        border-radius: 50%;
+        background: #ff70ad;
+        color: #250817;
+        font-size: 15px;
+        cursor: pointer;
+        flex-shrink: 0;
+        -webkit-tap-highlight-color: transparent;
       }
 
-      .sound-status {
-        font-size: 17px;
-        opacity: 0.85;
-        animation: notePulse 1.5s ease-in-out infinite;
+      .music-player button:active {
+        transform: scale(0.94);
       }
 
-      @keyframes notePulse {
-        50% {
-          transform: scale(1.25);
-          opacity: 0.45;
-        }
+      .music-info {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        font-family: Arial, sans-serif;
+      }
+
+      .music-title {
+        color: #ffd0e2;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .music-status {
+        color: #c58da7;
+        font-size: 10px;
       }
 
       @media (max-width: 600px) {
@@ -96,11 +112,8 @@
           height: 76svh;
         }
 
-        .music {
-          bottom: max(18px, env(safe-area-inset-bottom));
-          font-size: 12px;
-          padding: 9px 15px;
-          gap: 8px;
+        .music-player {
+          bottom: max(20px, env(safe-area-inset-bottom));
         }
       }
 
@@ -109,31 +122,29 @@
           height: 78vh;
         }
 
-        .music {
-          bottom: 5px;
-          padding: 6px 12px;
-        }
-      }
-
-      @media (prefers-reduced-motion: reduce) {
-        .music-note,
-        .sound-status {
-          animation: none;
+        .music-player {
+          bottom: 8px;
         }
       }
     </style>
   </head>
 
   <body>
-    <canvas id="heart" aria-label="Animasi hati pink dengan tulisan I love you">
-    </canvas>
+    <canvas
+      id="heart"
+      aria-label="Animasi hati pink dengan tulisan I love you"
+    ></canvas>
 
     <canvas id="sparkles" aria-hidden="true"></canvas>
 
-    <div class="music">
-      <span class="music-note">♫</span>
-      <span>romantic little melody</span>
-      <span class="sound-status">♪</span>
+    <!-- PEMUTAR MUSIK -->
+    <div class="music-player">
+      <button id="musicButton" type="button" aria-label="Putar musik">▶</button>
+
+      <div class="music-info">
+        <span class="music-title">Until I Found You</span>
+        <span class="music-status" id="musicStatus">Tap to play</span>
+      </div>
     </div>
 
     <audio id="bgMusic" loop preload="auto">
@@ -202,7 +213,7 @@
         }
       }
 
-      // Detak jantung dengan dua denyutan lembut
+      // DETAK JANTUNG
       function heartbeat(ts) {
         const beat = (ts % 1100) / 1100;
 
@@ -254,7 +265,6 @@
         sctx.clearRect(0, 0, sw, sh);
 
         for (const a of sparkles) {
-          // Gerakan partikel yang perlahan
           a.x += a.vx * dt * 60;
           a.y += a.vy * dt * 60;
 
@@ -266,7 +276,6 @@
           if (a.x < -5) a.x = sw + 5;
           if (a.x > sw + 5) a.x = -5;
 
-          // Efek berkelip
           const tw = (Math.sin(ts * 0.001 * a.s + a.p) + 1) / 2;
 
           sctx.globalAlpha = 0.12 + tw * 0.6;
@@ -276,7 +285,6 @@
 
           sctx.beginPath();
           sctx.arc(a.x, a.y, a.r * (0.7 + tw * 0.6), 0, Math.PI * 2);
-
           sctx.fill();
 
           if (tw > 0.94) {
@@ -310,7 +318,6 @@
 
         drawSparkles(ts, dt);
 
-        // Detak hati
         const pulse = heartbeat(ts);
 
         points.forEach((p, i) => {
@@ -326,7 +333,6 @@
           const y = h / 2 - 24 + (p.y - (h / 2 - 24)) * pulse;
 
           ctx.beginPath();
-
           ctx.arc(x, y, p.size * (0.75 + twinkle * 0.5), 0, Math.PI * 2);
 
           ctx.fillStyle = `rgba(
@@ -344,7 +350,7 @@
 
         ctx.shadowBlur = 0;
 
-        // Tulisan muncul setelah hati hampir selesai terbentuk
+        // TULISAN I LOVE YOU
         const textAlpha = Math.max(0, Math.min(1, (progress - 1.02) * 3));
 
         if (textAlpha > 0) {
@@ -370,10 +376,7 @@
         requestAnimationFrame(frame);
       }
 
-      // ==============================
-      // RESIZE RESPONSIF
-      // ==============================
-
+      // RESPONSIF
       const observer = new ResizeObserver(resize);
       observer.observe(canvas);
 
@@ -389,25 +392,56 @@
       // ==============================
 
       const music = document.getElementById("bgMusic");
+      const musicButton = document.getElementById("musicButton");
+      const musicStatus = document.getElementById("musicStatus");
 
       music.volume = 0.5;
 
-      window.addEventListener("load", () => {
-        music.play().catch(() => {
-          console.log("Autoplay diblokir browser.");
-        });
+      function updateMusicButton() {
+        if (music.paused) {
+          musicButton.textContent = "▶";
+          musicStatus.textContent = "Tap to play";
+          musicButton.setAttribute("aria-label", "Putar musik");
+        } else {
+          musicButton.textContent = "Ⅱ";
+          musicStatus.textContent = "Now playing";
+          musicButton.setAttribute("aria-label", "Jeda musik");
+        }
+      }
+
+      function playMusic() {
+        music
+          .play()
+          .then(updateMusicButton)
+          .catch(() => {
+            updateMusicButton();
+          });
+      }
+
+      musicButton.addEventListener("click", () => {
+        if (music.paused) {
+          playMusic();
+        } else {
+          music.pause();
+        }
       });
 
-      // Jika autoplay diblokir, musik diputar saat interaksi pertama
-      document.addEventListener(
-        "pointerdown",
-        () => {
-          if (music.paused) {
-            music.play().catch(() => {});
-          }
-        },
-        { once: true },
-      );
+      music.addEventListener("play", updateMusicButton);
+      music.addEventListener("pause", updateMusicButton);
+
+      // COBA AUTOPLAY
+      window.addEventListener("load", () => {
+        playMusic();
+      });
+
+      // COBA PUTAR SAAT PENGGUNA MENYENTUH LAYAR
+      document.addEventListener("pointerdown", (event) => {
+        if (music.paused && !musicButton.contains(event.target)) {
+          playMusic();
+        }
+      });
+
+      updateMusicButton();
     </script>
   </body>
 </html>
